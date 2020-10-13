@@ -159,7 +159,11 @@ is logical for a block cursor)."
 
     (save-excursion
       ;; This is needed once at the start, unlike line stepping.
-      (forward-char dir)
+      (when
+        (if (< dir 0)
+          (> pos-prev pos-bol)
+          (<= pos-prev pos-eol))
+        (forward-char dir))
 
       (while (null result)
         (let
@@ -204,8 +208,12 @@ is logical for a block cursor)."
             (t ;; Keep looping.
               ;; If we reach the beginning or end of the document, we may need to use this.
               (setq pos-prev (point))
-              ;; Forward character.
-              (forward-char dir))))))
+              (when
+                (if (< dir 0)
+                  (> pos-prev pos-bol)
+                  (<= pos-prev pos-eol))
+                ;; Forward character.
+                (forward-char dir)))))))
     result))
 
 
