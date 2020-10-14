@@ -77,3 +77,10 @@ Example with evil-mode key bindings.
    (define-key evil-insert-state-map (kbd "M-j") 'spatial-navigate-forward-vertical-bar)
    (define-key evil-insert-state-map (kbd "M-h") 'spatial-navigate-backward-horizontal-bar)
    (define-key evil-insert-state-map (kbd "M-l") 'spatial-navigate-forward-horizontal-bar)
+
+
+Customization
+-------------
+
+``spatial-navigate-wrap-horizontal-motion``: nil
+   Skip blank lines when horizontal motion reaches line bounds.
