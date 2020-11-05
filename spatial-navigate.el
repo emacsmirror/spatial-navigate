@@ -50,7 +50,12 @@
 ;;; Code:
 
 ;; ---------------------------------------------------------------------------
-;; Main Internal Logic
+;; Custom Variables
+
+(defcustom spatial-navigate-wrap-horizontal-motion nil
+  "Skip blank lines when horizontal motion reaches line bounds."
+  :group 'spatial-navigate
+  :type 'boolean)
 
 (defun spatial-navigate--vertical-calc (dir is-block-cursor)
   "Calculate the next/previous vertical position based on DIR (-1 or 1).
@@ -159,7 +164,11 @@ is logical for a block cursor)."
 
     (save-excursion
       ;; This is needed once at the start, unlike line stepping.
-      (forward-char dir)
+      (when
+        (if (< dir 0)
+          (> pos-prev pos-bol)
+          (<= pos-prev pos-eol))
+        (forward-char dir))
 
       (while (null result)
         (let
@@ -204,8 +213,12 @@ is logical for a block cursor)."
             (t ;; Keep looping.
               ;; If we reach the beginning or end of the document, we may need to use this.
               (setq pos-prev (point))
-              ;; Forward character.
-              (forward-char dir))))))
+              (when
+                (if (< dir 0)
+                  (> pos-prev pos-bol)
+                  (<= pos-prev pos-eol))
+                ;; Forward character.
+                (forward-char dir)))))))
     result))
 
 
@@ -223,8 +236,22 @@ is logical for a block cursor)."
 (defun spatial-navigate--horizontal (dir is-block-cursor)
   "See `spatial-navigate--horizontal-calc' for docs on DIR and IS-BLOCK-CURSOR."
   (let ((pos-next (spatial-navigate--horizontal-calc dir is-block-cursor)))
+
+    ;; Optionally skip over blank lines.
+    (when spatial-navigate-wrap-horizontal-motion
+      (when (zerop (- pos-next (point)))
+        (save-excursion
+          (when (zerop (forward-line dir))
+            ;; Skip blank lines.
+            (while (and (looking-at-p "[[:space:]]*$") (zerop (forward-line dir))))
+            (setq pos-next
+              (if (< dir 0)
+                (line-end-position)
+                (line-beginning-position)))))))
+
     (when (zerop (- pos-next (point)))
       (user-error "Spatial-navigate: line limit reached!"))
+
     (goto-char pos-next)))
 
 

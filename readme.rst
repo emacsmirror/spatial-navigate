@@ -8,6 +8,9 @@ You may navigate in 4 directions, jumping over contiguous regions of white-space
 
 To get an idea how this can be useful it's best to see the demo or try it for yourself.
 
+Available via `melpa <https://melpa.org/#/spatial-navigate>`__.
+
+
 Motivation
 ----------
 
@@ -26,7 +29,10 @@ it's just an alternative which you might find useful.
 Features
 --------
 
-TODO.
+- Navigate in 4 directions.
+- Expose functions for both box & bar cursors,
+  to handle white-space surrounding the cursor logically.
+
 
 Usage
 -----
@@ -71,3 +77,10 @@ Example with evil-mode key bindings.
    (define-key evil-insert-state-map (kbd "M-j") 'spatial-navigate-forward-vertical-bar)
    (define-key evil-insert-state-map (kbd "M-h") 'spatial-navigate-backward-horizontal-bar)
    (define-key evil-insert-state-map (kbd "M-l") 'spatial-navigate-forward-horizontal-bar)
+
+
+Customization
+-------------
+
+``spatial-navigate-wrap-horizontal-motion``: nil
+   Skip blank lines when horizontal motion reaches line bounds.
