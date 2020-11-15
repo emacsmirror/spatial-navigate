@@ -243,7 +243,7 @@ is logical for a block cursor)."
         (save-excursion
           (when (zerop (forward-line dir))
             ;; Skip blank lines.
-            (while (and (looking-at-p "[[:space:]]*$") (zerop (forward-line dir))))
+            (while (and (looking-at-p "[[:blank:]]*$") (zerop (forward-line dir))))
             (setq pos-next
               (if (< dir 0)
                 (line-end-position)
