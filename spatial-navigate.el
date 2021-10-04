@@ -75,10 +75,12 @@ is logical for a block cursor)."
       (col-init (current-column))
       (is-fill-fn
         (lambda (pos beg end default)
-          (if (and (>= pos beg) (< pos end))
-            (let ((ch (char-after pos)))
-              (not (memq ch (list ?\s ?\t))))
-            default))))
+          (cond
+            ((and (>= pos beg) (< pos end))
+              (let ((ch (char-after pos)))
+                (not (memq ch (list ?\s ?\t)))))
+            (t
+              default)))))
     (save-excursion
       (while (null result)
 
@@ -104,13 +106,15 @@ is logical for a block cursor)."
                     (is-fill-prev (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
                     (is-fill-next (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
 
-                  (if is-block-cursor
+                  (cond
                     ;; Check 3 characters, current char, before & after.
                     ;; If there are two blanks before or after, this is considered not filled.
-                    (not (or is-fill-curr (and is-fill-prev is-fill-next)))
+                    (is-block-cursor
+                      (not (or is-fill-curr (and is-fill-prev is-fill-next))))
 
                     ;; Check only 2 characters.
-                    (not (or is-fill-curr is-fill-prev)))))))
+                    (t
+                      (not (or is-fill-curr is-fill-prev))))))))
 
           ;; Keep searching for whatever we encounter first.
           (when is-first
@@ -122,9 +126,11 @@ is logical for a block cursor)."
             ((not (eq is-empty is-empty-state))
               ;; We have hit a different state, stop!
               (setq result
-                (if is-empty-state
-                  (cons lines (point))
-                  (cons lines-prev pos-prev))))
+                (cond
+                  (is-empty-state
+                    (cons lines (point)))
+                  (t
+                    (cons lines-prev pos-prev)))))
             ((eq pos-prev (point))
               ;; Beginning or end, don't hang!
               ;; Use the last valid state.
@@ -157,17 +163,21 @@ is logical for a block cursor)."
 
       (is-fill-fn
         (lambda (pos beg end default)
-          (if (and (>= pos beg) (< pos end))
-            (let ((ch (char-after pos)))
-              (not (memq ch (list ?\s ?\t))))
-            default))))
+          (cond
+            ((and (>= pos beg) (< pos end))
+              (let ((ch (char-after pos)))
+                (not (memq ch (list ?\s ?\t)))))
+            (t
+              default)))))
 
     (save-excursion
       ;; This is needed once at the start, unlike line stepping.
       (when
-        (if (< dir 0)
-          (> pos-prev pos-bol)
-          (<= pos-prev pos-eol))
+        (cond
+          ((< dir 0)
+            (> pos-prev pos-bol))
+          (t
+            (<= pos-prev pos-eol)))
         (forward-char dir))
 
       (while (null result)
@@ -192,21 +202,29 @@ is logical for a block cursor)."
             ((not (eq is-empty is-empty-state))
               ;; We have hit a different state, stop!
               (setq result
-                (if is-block-cursor
-                  (if is-empty-state
-                    (point)
-                    pos-prev)
-                  (if (> dir 0)
-                    (point)
-                    pos-prev))))
+                (cond
+                  (is-block-cursor
+                    (cond
+                      (is-empty-state
+                        (point))
+                      (t
+                        pos-prev)))
+                  (t
+                    (cond
+                      ((> dir 0)
+                        (point))
+                      (t
+                        pos-prev))))))
             ((eq pos-prev (point))
               ;; Beginning or end, don't hang!
               ;; Use the last valid state.
               (setq result (point)))
             ( ;; If we get out of range, use last usable point.
-              (if (< dir 0)
-                (< (point) pos-bol)
-                (>= (point) pos-eol))
+              (cond
+                ((< dir 0)
+                  (< (point) pos-bol))
+                (t
+                  (>= (point) pos-eol)))
               ;; Beginning or end, don't hang!
               ;; Use the last valid state.
               (setq result pos-prev))
@@ -214,9 +232,11 @@ is logical for a block cursor)."
               ;; If we reach the beginning or end of the document, we may need to use this.
               (setq pos-prev (point))
               (when
-                (if (< dir 0)
-                  (> pos-prev pos-bol)
-                  (<= pos-prev pos-eol))
+                (cond
+                  ((< dir 0)
+                    (> pos-prev pos-bol))
+                  (t
+                    (<= pos-prev pos-eol)))
                 ;; Forward character.
                 (forward-char dir)))))))
     result))
@@ -245,9 +265,11 @@ is logical for a block cursor)."
             ;; Skip blank lines.
             (while (and (looking-at-p "[[:blank:]]*$") (zerop (forward-line dir))))
             (setq pos-next
-              (if (< dir 0)
-                (line-end-position)
-                (line-beginning-position)))))))
+              (cond
+                ((< dir 0)
+                  (line-end-position))
+                (t
+                  (line-beginning-position))))))))
 
     (when (zerop (- pos-next (point)))
       (user-error "Spatial-navigate: line limit reached!"))
