@@ -286,7 +286,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-forward-vertical-box ()
   "Jump forward vertically across white-space and non-white-space.
 
-(for a box cursor)."
+Use for a box cursor."
   (interactive)
   (spatial-navigate--vertical 1 t))
 
@@ -294,7 +294,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-backward-vertical-box ()
   "Jump backward vertically across white-space and non-white-space.
 
-(for a box cursor)."
+Use for a box cursor."
   (interactive)
   (spatial-navigate--vertical -1 t))
 
@@ -303,7 +303,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-forward-vertical-bar ()
   "Jump forward vertically across white-space and non-white-space.
 
-(for a bar cursor)."
+Use for a bar cursor."
   (interactive)
   (spatial-navigate--vertical 1 nil))
 
@@ -311,7 +311,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-backward-vertical-bar ()
   "Jump backward vertically across white-space and non-white-space.
 
-(for a bar cursor)."
+Use for a bar cursor."
   (interactive)
   (spatial-navigate--vertical -1 nil))
 
@@ -321,7 +321,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-forward-horizontal-box ()
   "Jump forward horizontal across white-space and non-white-space.
 
-(for a box cursor)."
+Use for a box cursor."
   (interactive)
   (spatial-navigate--horizontal 1 t))
 
@@ -329,7 +329,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-backward-horizontal-box ()
   "Jump backward horizontal across white-space and non-white-space.
 
-(for a box cursor)."
+Use for a box cursor."
   (interactive)
   (spatial-navigate--horizontal -1 t))
 
@@ -337,7 +337,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-forward-horizontal-bar ()
   "Jump forward horizontal across white-space and non-white-space.
 
-(for a bar cursor)."
+Use for a bar cursor."
   (interactive)
   (spatial-navigate--horizontal 1 nil))
 
@@ -345,7 +345,7 @@ is logical for a block cursor)."
 (defun spatial-navigate-backward-horizontal-bar ()
   "Jump backward horizontal across white-space and non-white-space.
 
-(for a bar cursor)."
+Use for a bar cursor."
   (interactive)
   (spatial-navigate--horizontal -1 nil))
 
