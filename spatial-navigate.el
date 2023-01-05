@@ -52,9 +52,9 @@
 (defun spatial-navigate--evil-visual-mode-workaround (state)
   "Workaround for evil-visual line mode, STATE must be \\'pre or \\'post."
   (when (and (fboundp 'evil-visual-state-p)
-             (funcall 'evil-visual-state-p)
+             (funcall #'evil-visual-state-p)
              (fboundp 'evil-visual-type)
-             (eq (funcall 'evil-visual-type) 'line)
+             (eq (funcall #'evil-visual-type) 'line)
              (boundp 'evil-visual-point))
     (let ((mark (symbol-value 'evil-visual-point)))
       (when (markerp mark)
