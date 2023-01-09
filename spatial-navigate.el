@@ -364,4 +364,8 @@ Use for a bar cursor."
   (spatial-navigate--horizontal -1 nil))
 
 (provide 'spatial-navigate)
+;; Local Variables:
+;; fill-column: 99
+;; indent-tabs-mode: nil
+;; End:
 ;;; spatial-navigate.el ends here
