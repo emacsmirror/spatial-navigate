@@ -109,17 +109,17 @@ is logical for a block cursor)."
               (or (< col col-init)
                   ;; End of the line is also considered empty.
                   (and (or (zerop col-init) is-block-cursor) (eolp))
-                  (let*
-                      ( ;; Do this so we don't delimit on spaces between words.
-                       ;; Surrounded by spaces before and after.
-                       (pos-eol (line-end-position))
-                       (pos-bol (line-beginning-position))
 
-                       (is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
-                       (is-fill-prev
-                        (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
-                       (is-fill-next
-                        (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
+                  ;; Do this so we don't delimit on spaces between words.
+                  ;; Surrounded by spaces before and after.
+                  (let* ((pos-eol (line-end-position))
+                         (pos-bol (line-beginning-position))
+
+                         (is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
+                         (is-fill-prev
+                          (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
+                         (is-fill-next
+                          (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
 
                     (cond
                      ;; Check 3 characters, current char, before & after.
@@ -150,7 +150,7 @@ is logical for a block cursor)."
           ;; Beginning or end, don't hang!
           ;; Use the last valid state.
           (setq result result-fallback))
-         (t ;; Keep looping.
+         (t ; Keep looping.
           ;; If we reach the beginning or end of the document,
           ;; use the last time we reached a valid column.
           (when (eq col col-init)
@@ -195,12 +195,11 @@ is logical for a block cursor)."
 
     (while (null result)
       (let ((is-empty
-             (let*
-                 ( ;; Do this so we don't delimit on spaces between words.
-                  ;; Surrounded by spaces before and after.
-                  (is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
-                  (is-fill-prev (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
-                  (is-fill-next (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
+             ;; Do this so we don't delimit on spaces between words.
+             ;; Surrounded by spaces before and after.
+             (let* ((is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
+                    (is-fill-prev (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
+                    (is-fill-next (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
                (not (or is-fill-curr (and is-fill-prev is-fill-next))))))
 
         ;; Keep searching for whatever we encounter first.
@@ -230,8 +229,8 @@ is logical for a block cursor)."
           ;; Beginning or end, don't hang!
           ;; Use the last valid state.
           (setq result (point)))
-         ( ;; If we get out of range, use last usable point.
-          (cond
+         ;; If we get out of range, use last usable point.
+         ((cond
            ((< dir 0)
             (< (point) pos-bol))
            (t
@@ -239,7 +238,7 @@ is logical for a block cursor)."
           ;; Beginning or end, don't hang!
           ;; Use the last valid state.
           (setq result pos-prev))
-         (t ;; Keep looping.
+         (t ; Keep looping.
           ;; If we reach the beginning or end of the document, we may need to use this.
           (setq pos-prev (point))
           (when (cond
