@@ -112,8 +112,8 @@ is logical for a block cursor)."
 
                   ;; Do this so we don't delimit on spaces between words.
                   ;; Surrounded by spaces before and after.
-                  (let* ((pos-eol (line-end-position))
-                         (pos-bol (line-beginning-position))
+                  (let* ((pos-eol (pos-eol))
+                         (pos-bol (pos-bol))
 
                          (is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
                          (is-fill-prev
@@ -173,8 +173,8 @@ is logical for a block cursor)."
         (is-empty-state nil)
         (pos-prev (point))
 
-        (pos-eol (line-end-position))
-        (pos-bol (line-beginning-position))
+        (pos-eol (pos-eol))
+        (pos-bol (pos-bol))
 
         (is-fill-fn
          (lambda (pos beg end default)
@@ -279,9 +279,9 @@ is logical for a block cursor)."
             (setq pos-next
                   (cond
                    ((< dir 0)
-                    (line-end-position))
+                    (pos-eol))
                    (t
-                    (line-beginning-position))))))))
+                    (pos-bol))))))))
 
     (when (zerop (- pos-next (point)))
       (user-error "Spatial-navigate: line limit reached!"))
