@@ -52,6 +52,7 @@
 
 (defun spatial-navigate--evil-visual-mode-workaround (state)
   "Workaround for evil-visual line mode, STATE must be \\'pre or \\'post."
+  (declare (important-return-value nil))
   (when (and (fboundp 'evil-visual-state-p)
              (funcall #'evil-visual-state-p)
              (fboundp 'evil-visual-type)
@@ -81,6 +82,7 @@
 Argument IS-BLOCK-CURSOR causes the cursor to detect white-space using
 characters before and after the current cursor, this behaves in a way that
 is logical for a block cursor)."
+  (declare (important-return-value t))
   (spatial-navigate--evil-visual-mode-workaround 'pre)
 
   (let ((result nil)
@@ -167,6 +169,7 @@ is logical for a block cursor)."
 Argument IS-BLOCK-CURSOR causes the cursor to detect white-space using
 characters before and after the current cursor, this behaves in a way that
 is logical for a block cursor)."
+  (declare (important-return-value t))
   (spatial-navigate--evil-visual-mode-workaround 'pre)
 
   (let ((result nil)
@@ -257,6 +260,7 @@ is logical for a block cursor)."
 
 (defun spatial-navigate--vertical (dir is-block-cursor)
   "See `spatial-navigate--vertical-calc' for docs on DIR and IS-BLOCK-CURSOR."
+  (declare (important-return-value nil))
   (pcase-let ((`(,lines . ,pos-next)
                (save-excursion (spatial-navigate--vertical-calc dir is-block-cursor))))
     (when (zerop lines)
@@ -268,6 +272,7 @@ is logical for a block cursor)."
 
 (defun spatial-navigate--horizontal (dir is-block-cursor)
   "See `spatial-navigate--horizontal-calc' for docs on DIR and IS-BLOCK-CURSOR."
+  (declare (important-return-value nil))
   (let ((pos-next (save-excursion (spatial-navigate--horizontal-calc dir is-block-cursor))))
 
     ;; Optionally skip over blank lines.
@@ -302,6 +307,7 @@ is logical for a block cursor)."
   "Jump forward vertically across white-space and non-white-space.
 
 Use for a box cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--vertical 1 t))
 
@@ -310,6 +316,7 @@ Use for a box cursor."
   "Jump backward vertically across white-space and non-white-space.
 
 Use for a box cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--vertical -1 t))
 
@@ -319,6 +326,7 @@ Use for a box cursor."
   "Jump forward vertically across white-space and non-white-space.
 
 Use for a bar cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--vertical 1 nil))
 
@@ -327,6 +335,7 @@ Use for a bar cursor."
   "Jump backward vertically across white-space and non-white-space.
 
 Use for a bar cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--vertical -1 nil))
 
@@ -337,6 +346,7 @@ Use for a bar cursor."
   "Jump forward horizontal across white-space and non-white-space.
 
 Use for a box cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--horizontal 1 t))
 
@@ -345,6 +355,7 @@ Use for a box cursor."
   "Jump backward horizontal across white-space and non-white-space.
 
 Use for a box cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--horizontal -1 t))
 
@@ -353,6 +364,7 @@ Use for a box cursor."
   "Jump forward horizontal across white-space and non-white-space.
 
 Use for a bar cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--horizontal 1 nil))
 
@@ -361,6 +373,7 @@ Use for a bar cursor."
   "Jump backward horizontal across white-space and non-white-space.
 
 Use for a bar cursor."
+  (declare (important-return-value nil))
   (interactive)
   (spatial-navigate--horizontal -1 nil))
 
