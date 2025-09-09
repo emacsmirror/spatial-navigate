@@ -105,7 +105,7 @@ is logical for a block cursor)."
 
       ;; Forward line and move to column.
       (forward-line dir)
-      (setq lines (+ dir lines))
+      (incf lines dir)
 
       (let* ((col (move-to-column col-init))
              (is-empty
