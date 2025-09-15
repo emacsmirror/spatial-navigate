@@ -276,42 +276,91 @@ is logical for a block cursor)."
 ;; Wrapper Functions
 
 (defun spatial-navigate--vertical (dir is-block-cursor)
-  "See `spatial-navigate--vertical-calc' for docs on DIR and IS-BLOCK-CURSOR."
+  "See `spatial-navigate--vertical-calc' for docs on DIR and IS-BLOCK-CURSOR.
+
+When DIR is outside -1/1 range, motion will run multiple times.
+
+Return the number of steps remaining (0 when all succeed
+or nil when the motion could not be performed."
   (declare (important-return-value nil))
-  (pcase-let ((`(,lines . ,pos-next)
-               (save-excursion (spatial-navigate--vertical-calc dir is-block-cursor))))
-    (when (zerop lines)
-      (user-error "Spatial-navigate: no lines to jump to!"))
+  (let ((times (abs dir))
+        (keep-searching t)
+        (changed nil))
+    (cond
+     ((eq times dir)
+      (setq dir 1))
+     (t
+      (setq dir -1)))
 
-    (goto-char pos-next)
+    (while (and keep-searching
+                (not
+                 (zerop
+                  (prog1 times
+                    (decf times)))))
+      (pcase-let ((`(,lines . ,pos-next)
+                   (save-excursion (spatial-navigate--vertical-calc dir is-block-cursor))))
+        (cond
+         ((zerop lines)
+          (setq keep-searching nil))
+         (t
+          (setq changed t)
+          (goto-char pos-next)))))
 
-    (spatial-navigate--evil-visual-mode-workaround 'post)))
+    (cond
+     (changed
+      (spatial-navigate--evil-visual-mode-workaround 'post)
+      (* times dir))
+     (t
+      (message "Spatial-navigate: no lines to jump to!")
+      nil))))
 
 (defun spatial-navigate--horizontal (dir is-block-cursor)
   "See `spatial-navigate--horizontal-calc' for docs on DIR and IS-BLOCK-CURSOR."
   (declare (important-return-value nil))
-  (let ((pos-next (save-excursion (spatial-navigate--horizontal-calc dir is-block-cursor))))
+  (let ((times (abs dir))
+        (keep-searching t)
+        (changed nil))
+    (cond
+     ((eq times dir)
+      (setq dir 1))
+     (t
+      (setq dir -1)))
 
-    ;; Optionally skip over blank lines.
-    (when spatial-navigate-wrap-horizontal-motion
-      (when (zerop (- pos-next (point)))
-        (save-excursion
-          (when (zerop (forward-line dir))
-            ;; Skip blank lines.
-            (while (and (looking-at-p "[[:blank:]]*$") (zerop (forward-line dir))))
-            (setq pos-next
-                  (cond
-                   ((< dir 0)
-                    (pos-eol))
-                   (t
-                    (pos-bol))))))))
+    (while (and keep-searching
+                (not
+                 (zerop
+                  (prog1 times
+                    (decf times)))))
 
-    (when (zerop (- pos-next (point)))
-      (user-error "Spatial-navigate: line limit reached!"))
+      (let ((pos-next (save-excursion (spatial-navigate--horizontal-calc dir is-block-cursor))))
 
-    (goto-char pos-next)
+        ;; Optionally skip over blank lines.
+        (when spatial-navigate-wrap-horizontal-motion
+          (when (zerop (- pos-next (point)))
+            (save-excursion
+              (when (zerop (forward-line dir))
+                ;; Skip blank lines.
+                (while (and (looking-at-p "[[:blank:]]*$") (zerop (forward-line dir))))
+                (setq pos-next
+                      (cond
+                       ((< dir 0)
+                        (pos-eol))
+                       (t
+                        (pos-bol))))))))
+        (cond
+         ((zerop (- pos-next (point)))
+          (setq keep-searching nil))
+         (t
+          (setq changed t)
+          (goto-char pos-next)))))
 
-    (spatial-navigate--evil-visual-mode-workaround 'post)))
+    (cond
+     (changed
+      (spatial-navigate--evil-visual-mode-workaround 'post)
+      (* times dir))
+     (t
+      (message "Spatial-navigate: line limit reached!")
+      nil))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -320,79 +369,146 @@ is logical for a block cursor)."
 ;; Vertical motion.
 
 ;;;###autoload
-(defun spatial-navigate-forward-vertical-box ()
-  "Jump forward vertically across white-space and non-white-space.
+(defun spatial-navigate-forward-vertical-box (arg)
+  "Jump forward vertically ARG times across white-space & non-white-space.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a box cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--vertical 1 t))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--vertical arg t))
+   ((< arg 0)
+    (spatial-navigate-backward-vertical-box (- arg)))
+   (t
+    nil)))
 
 ;;;###autoload
-(defun spatial-navigate-backward-vertical-box ()
-  "Jump backward vertically across white-space and non-white-space.
+(defun spatial-navigate-backward-vertical-box (arg)
+  "Jump backward vertically ARG times across white-space and non-white-space.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a box cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--vertical -1 t))
-
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--vertical (- arg) t))
+   ((< arg 0)
+    (spatial-navigate-forward-vertical-box (- arg)))
+   (t
+    nil)))
 
 ;;;###autoload
-(defun spatial-navigate-forward-vertical-bar ()
-  "Jump forward vertically across white-space and non-white-space.
+(defun spatial-navigate-forward-vertical-bar (arg)
+  "Jump forward vertically ARG times across white-space and non-white-space.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a bar cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--vertical 1 nil))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--vertical arg nil))
+   ((< arg 0)
+    (spatial-navigate-backward-vertical-bar (- arg)))
+   (t
+    nil)))
 
 ;;;###autoload
-(defun spatial-navigate-backward-vertical-bar ()
-  "Jump backward vertically across white-space and non-white-space.
+(defun spatial-navigate-backward-vertical-bar (arg)
+  "Jump backward vertically ARG times across white-space and non-white-space.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a bar cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--vertical -1 nil))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--vertical (- arg) nil))
+   ((< arg 0)
+    (spatial-navigate-forward-vertical-bar (- arg)))
+   (t
+    nil)))
 
 ;; Horizontal motion.
 
 ;;;###autoload
-(defun spatial-navigate-forward-horizontal-box ()
+(defun spatial-navigate-forward-horizontal-box (arg)
   "Jump forward horizontal across white-space and non-white-space.
+A negative ARG reversed the motion.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a box cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--horizontal 1 t))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--horizontal arg t))
+   ((< arg 0)
+    (spatial-navigate-backward-horizontal-box (- arg)))
+   (t
+    nil)))
 
 ;;;###autoload
-(defun spatial-navigate-backward-horizontal-box ()
+(defun spatial-navigate-backward-horizontal-box (arg)
   "Jump backward horizontal across white-space and non-white-space.
+A negative ARG reversed the motion.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a box cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--horizontal -1 t))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--horizontal (- arg) t))
+   ((< arg 0)
+    (spatial-navigate-forward-horizontal-box (- arg)))
+   (t
+    nil)))
 
 ;;;###autoload
-(defun spatial-navigate-forward-horizontal-bar ()
+(defun spatial-navigate-forward-horizontal-bar (arg)
   "Jump forward horizontal across white-space and non-white-space.
+A negative ARG reversed the motion.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a bar cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--horizontal 1 nil))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--horizontal arg nil))
+   ((< arg 0)
+    (spatial-navigate-backward-horizontal-bar (- arg)))
+   (t
+    nil)))
 
 ;;;###autoload
-(defun spatial-navigate-backward-horizontal-bar ()
+(defun spatial-navigate-backward-horizontal-bar (arg)
   "Jump backward horizontal across white-space and non-white-space.
+A negative ARG reversed the motion.
+Return the number of steps remaining (0 when all succeed)
+or nil when the motion could not be performed.
 
 Use for a bar cursor."
   (declare (important-return-value nil))
-  (interactive)
-  (spatial-navigate--horizontal -1 nil))
+  (interactive "p")
+  (cond
+   ((> arg 0)
+    (spatial-navigate--horizontal (- arg) nil))
+   ((< arg 0)
+    (spatial-navigate-forward-horizontal-bar (- arg)))
+   (t
+    nil)))
 
 (provide 'spatial-navigate)
 ;; Local Variables:
