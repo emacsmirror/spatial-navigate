@@ -115,7 +115,7 @@ is logical for a block cursor)."
            (cond
             ((and (>= pos beg) (< pos end))
              (let ((ch (char-after pos)))
-               (not (memq ch (list ?\s ?\t)))))
+               (null (memq ch (list ?\s ?\t)))))
             (t
              default)))))
     (while (null result)
@@ -145,11 +145,11 @@ is logical for a block cursor)."
                      ;; Check 3 characters, current char, before & after.
                      ;; If there are two blanks before or after, this is considered not filled.
                      (is-block-cursor
-                      (not (or is-fill-curr (and is-fill-prev is-fill-next))))
+                      (null (or is-fill-curr (and is-fill-prev is-fill-next))))
 
                      ;; Check only 2 characters.
                      (t
-                      (not (or is-fill-curr is-fill-prev))))))))
+                      (null (or is-fill-curr is-fill-prev))))))))
 
         ;; Keep searching for whatever we encounter first.
         (when is-first
@@ -158,7 +158,7 @@ is logical for a block cursor)."
 
         ;; Either set the result, or continue looping.
         (cond
-         ((not (eq is-empty is-empty-state))
+         ((null (eq is-empty is-empty-state))
           ;; We have hit a different state, stop!
           (setq result
                 (cond
@@ -202,7 +202,7 @@ is logical for a block cursor)."
            (cond
             ((and (>= pos beg) (< pos end))
              (let ((ch (char-after pos)))
-               (not (memq ch (list ?\s ?\t)))))
+               (null (memq ch (list ?\s ?\t)))))
             (t
              default)))))
 
@@ -221,7 +221,7 @@ is logical for a block cursor)."
              (let* ((is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
                     (is-fill-prev (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
                     (is-fill-next (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
-               (not (or is-fill-curr (and is-fill-prev is-fill-next))))))
+               (null (or is-fill-curr (and is-fill-prev is-fill-next))))))
 
         ;; Keep searching for whatever we encounter first.
         (when is-first
@@ -230,7 +230,7 @@ is logical for a block cursor)."
 
         ;; Either set the result, or continue looping.
         (cond
-         ((not (eq is-empty is-empty-state))
+         ((null (eq is-empty is-empty-state))
           ;; We have hit a different state, stop!
           (setq result
                 (cond
@@ -293,7 +293,7 @@ or nil when the motion could not be performed."
       (setq dir -1)))
 
     (while (and keep-searching
-                (not
+                (null
                  (zerop
                   (prog1 times
                     (decf times)))))
@@ -327,7 +327,7 @@ or nil when the motion could not be performed."
       (setq dir -1)))
 
     (while (and keep-searching
-                (not
+                (null
                  (zerop
                   (prog1 times
                     (decf times)))))
