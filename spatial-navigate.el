@@ -93,6 +93,15 @@
 ;; ---------------------------------------------------------------------------
 ;; Private Functions
 
+(defun spatial-navigate--char-filled-p (pos beg end default)
+  "Return non-nil if POS contains a non-blank-space character.
+BEG and END are line bounds.  DEFAULT is returned if POS is out of range."
+  (declare (important-return-value t))
+  (if (and (>= pos beg) (< pos end))
+      (let ((ch (char-after pos)))
+        (not (memq ch '(?\s ?\t))))
+    default))
+
 (defun spatial-navigate--vertical-calc (dir is-block-cursor)
   "Calculate the next/previous vertical position based on DIR (-1 or 1).
 
@@ -109,15 +118,7 @@ is logical for a block cursor)."
         (is-first t)
         (is-empty-state nil)
         (pos-prev (point))
-        (col-init (current-column))
-        (is-fill-fn
-         (lambda (pos beg end default)
-           (cond
-            ((and (>= pos beg) (< pos end))
-             (let ((ch (char-after pos)))
-               (null (memq ch (list ?\s ?\t)))))
-            (t
-             default)))))
+        (col-init (current-column)))
     (while (null result)
 
       ;; Forward line and move to column.
@@ -135,11 +136,14 @@ is logical for a block cursor)."
                   (let* ((pos-eol (pos-eol))
                          (pos-bol (pos-bol))
 
-                         (is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
+                         (is-fill-curr
+                          (spatial-navigate--char-filled-p (point) pos-bol pos-eol nil))
                          (is-fill-prev
-                          (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr))
+                          (spatial-navigate--char-filled-p
+                           (- (point) 1) pos-bol pos-eol is-fill-curr))
                          (is-fill-next
-                          (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr)))
+                          (spatial-navigate--char-filled-p
+                           (+ (point) 1) pos-bol pos-eol is-fill-curr)))
 
                     (cond
                      ;; Check 3 characters, current char, before & after.
@@ -195,16 +199,7 @@ is logical for a block cursor)."
         (pos-prev (point))
 
         (pos-eol (pos-eol))
-        (pos-bol (pos-bol))
-
-        (is-fill-fn
-         (lambda (pos beg end default)
-           (cond
-            ((and (>= pos beg) (< pos end))
-             (let ((ch (char-after pos)))
-               (null (memq ch (list ?\s ?\t)))))
-            (t
-             default)))))
+        (pos-bol (pos-bol)))
 
     ;; This is needed once at the start, unlike line stepping.
     (when (cond
@@ -218,9 +213,11 @@ is logical for a block cursor)."
       (let ((is-empty
              ;; Do this so we don't delimit on spaces between words.
              ;; Surrounded by spaces before and after.
-             (let* ((is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
-                    (is-fill-prev (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr))
-                    (is-fill-next (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr)))
+             (let* ((is-fill-curr (spatial-navigate--char-filled-p (point) pos-bol pos-eol nil))
+                    (is-fill-prev
+                     (spatial-navigate--char-filled-p (- (point) 1) pos-bol pos-eol is-fill-curr))
+                    (is-fill-next
+                     (spatial-navigate--char-filled-p (+ (point) 1) pos-bol pos-eol is-fill-curr)))
                (null (or is-fill-curr (and is-fill-prev is-fill-next))))))
 
         ;; Keep searching for whatever we encounter first.
