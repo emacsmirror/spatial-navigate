@@ -137,9 +137,9 @@ is logical for a block cursor)."
 
                          (is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
                          (is-fill-prev
-                          (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
+                          (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr))
                          (is-fill-next
-                          (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
+                          (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr)))
 
                     (cond
                      ;; Check 3 characters, current char, before & after.
@@ -219,8 +219,8 @@ is logical for a block cursor)."
              ;; Do this so we don't delimit on spaces between words.
              ;; Surrounded by spaces before and after.
              (let* ((is-fill-curr (funcall is-fill-fn (point) pos-bol pos-eol nil))
-                    (is-fill-prev (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr))
-                    (is-fill-next (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr)))
+                    (is-fill-prev (funcall is-fill-fn (- (point) 1) pos-bol pos-eol is-fill-curr))
+                    (is-fill-next (funcall is-fill-fn (+ (point) 1) pos-bol pos-eol is-fill-curr)))
                (null (or is-fill-curr (and is-fill-prev is-fill-next))))))
 
         ;; Keep searching for whatever we encounter first.
