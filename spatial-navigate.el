@@ -81,7 +81,7 @@
          ;; Without this, `point' will be at the beginning of the line
          ;; (from the pre command hook).
          ((eq state 'pre)
-          (goto-char (marker-position mark)))
+          (goto-char mark))
          ;; Without this, the `point' wont move.
          ;; See: https://github.com/emacs-evil/evil/issues/1708
          ((eq state 'post)
