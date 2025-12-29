@@ -1,4 +1,4 @@
-;;; spatial-navigate.el --- Directional navigation between white-space blocks -*- lexical-binding: t -*-
+;;; spatial-navigate.el --- Directional navigation between blank-space blocks -*- lexical-binding: t -*-
 
 ;; SPDX-License-Identifier: GPL-2.0-or-later
 ;; Copyright (C) 2020  Campbell Barton
@@ -11,21 +11,20 @@
 
 ;;; Commentary:
 
-;; Support jumping horizontally & vertically
-;; across blocks of white-space or non-white-space.
+;; Support jumping horizontally and vertically
+;; across blocks of blank-space or non-blank-space.
 
-;;; Usage
+;;; Usage:
 
-
-;; ;; This shows how using Alt-Arrow Keys can be used to set directional navigation.
+;; ;; This shows how Alt-arrow keys can be used for directional navigation.
 ;; (global-set-key (kbd "<M-up>") 'spatial-navigate-backward-vertical-bar)
 ;; (global-set-key (kbd "<M-down>") 'spatial-navigate-forward-vertical-bar)
 ;; (global-set-key (kbd "<M-left>") 'spatial-navigate-backward-horizontal-bar)
 ;; (global-set-key (kbd "<M-right>") 'spatial-navigate-forward-horizontal-bar)
 
 ;; ;; If you use evil-mode, the 'box' navigation functions make sense in normal mode,
-;; ;; the 'bar' functions make most sense in insert mode.
-;;
+;; ;; while the 'bar' functions make the most sense in insert mode.
+
 ;; (define-key evil-normal-state-map (kbd "M-k") 'spatial-navigate-backward-vertical-box)
 ;; (define-key evil-normal-state-map (kbd "M-j") 'spatial-navigate-forward-vertical-box)
 ;; (define-key evil-normal-state-map (kbd "M-h") 'spatial-navigate-backward-horizontal-box)
@@ -36,7 +35,6 @@
 ;; (define-key evil-insert-state-map (kbd "M-l") 'spatial-navigate-forward-horizontal-bar)
 
 ;;; Code:
-
 
 ;; ---------------------------------------------------------------------------
 ;; Compatibility
@@ -65,10 +63,10 @@
 
 
 ;; ---------------------------------------------------------------------------
-;; Generic Functions
+;; Evil Mode Support
 
 (defun spatial-navigate--evil-visual-mode-workaround (state)
-  "Workaround for evil-visual line mode, STATE must be \\'pre or \\'post."
+  "Workaround for evil-visual line mode, STATE must be \\='pre or \\='post."
   (declare (important-return-value nil))
   (when (and (fboundp 'evil-visual-state-p)
              (funcall #'evil-visual-state-p)
@@ -82,7 +80,7 @@
          ;; (from the pre command hook).
          ((eq state 'pre)
           (goto-char mark))
-         ;; Without this, the `point' wont move.
+         ;; Without this, the `point' won't move.
          ;; See: https://github.com/emacs-evil/evil/issues/1708
          ((eq state 'post)
           (set-marker mark (point)))
@@ -105,9 +103,9 @@ BEG and END are line bounds.  DEFAULT is returned if POS is out of range."
 (defun spatial-navigate--vertical-calc (dir is-block-cursor)
   "Calculate the next/previous vertical position based on DIR (-1 or 1).
 
-Argument IS-BLOCK-CURSOR causes the cursor to detect white-space using
-characters before and after the current cursor, this behaves in a way that
-is logical for a block cursor)."
+Argument IS-BLOCK-CURSOR causes the cursor to detect blank-space using
+characters before and after the current cursor.  This behaves in a way that
+is logical for a block cursor."
   (declare (important-return-value t))
   (spatial-navigate--evil-visual-mode-workaround 'pre)
 
@@ -121,7 +119,7 @@ is logical for a block cursor)."
         (col-init (current-column)))
     (while (null result)
 
-      ;; Forward line and move to column.
+      ;; Step to next line and move to column.
       (forward-line dir)
       (incf lines dir)
 
@@ -131,8 +129,8 @@ is logical for a block cursor)."
                   ;; End of the line is also considered empty.
                   (and (or (zerop col-init) is-block-cursor) (eolp))
 
-                  ;; Do this so we don't delimit on spaces between words.
-                  ;; Surrounded by spaces before and after.
+                  ;; Avoid delimiting on spaces between words by checking
+                  ;; if we're surrounded by spaces before and after.
                   (let* ((pos-eol (pos-eol))
                          (pos-bol (pos-bol))
 
@@ -146,12 +144,12 @@ is logical for a block cursor)."
                            (+ (point) 1) pos-bol pos-eol is-fill-curr)))
 
                     (cond
-                     ;; Check 3 characters, current char, before & after.
-                     ;; If there are two blanks before or after, this is considered not filled.
+                     ;; Check three characters: current char, before, and after.
+                     ;; Empty if current is blank and at least one neighbor is also blank.
                      (is-block-cursor
                       (null (or is-fill-curr (and is-fill-prev is-fill-next))))
 
-                     ;; Check only 2 characters.
+                     ;; Check only two characters: current and previous.
                      (t
                       (null (or is-fill-curr is-fill-prev))))))))
 
@@ -171,8 +169,7 @@ is logical for a block cursor)."
                  (t
                   (cons lines-prev pos-prev)))))
          ((eq pos-prev (point))
-          ;; Beginning or end, don't hang!
-          ;; Use the last valid state.
+          ;; Point didn't move, we're at buffer boundary.
           (setq result result-fallback))
          (t ; Keep looping.
           ;; If we reach the beginning or end of the document,
@@ -185,11 +182,11 @@ is logical for a block cursor)."
 
 
 (defun spatial-navigate--horizontal-calc (dir is-block-cursor)
-  "Calculate the next/previous vertical position based on DIR (-1 or 1).
+  "Calculate the next/previous horizontal position based on DIR (-1 or 1).
 
-Argument IS-BLOCK-CURSOR causes the cursor to detect white-space using
-characters before and after the current cursor, this behaves in a way that
-is logical for a block cursor)."
+Argument IS-BLOCK-CURSOR causes the cursor to detect blank-space using
+characters before and after the current cursor.  This behaves in a way that
+is logical for a block cursor."
   (declare (important-return-value t))
   (spatial-navigate--evil-visual-mode-workaround 'pre)
 
@@ -201,7 +198,8 @@ is logical for a block cursor)."
         (pos-eol (pos-eol))
         (pos-bol (pos-bol)))
 
-    ;; This is needed once at the start, unlike line stepping.
+    ;; Initial step is needed here because forward-char requires explicit call,
+    ;; whereas forward-line in vertical-calc implicitly moves to the next line.
     (when (cond
            ((< dir 0)
             (> pos-prev pos-bol))
@@ -211,8 +209,8 @@ is logical for a block cursor)."
 
     (while (null result)
       (let ((is-empty
-             ;; Do this so we don't delimit on spaces between words.
-             ;; Surrounded by spaces before and after.
+             ;; Avoid delimiting on spaces between words by checking
+             ;; if we're surrounded by spaces before and after.
              (let* ((is-fill-curr (spatial-navigate--char-filled-p (point) pos-bol pos-eol nil))
                     (is-fill-prev
                      (spatial-navigate--char-filled-p (- (point) 1) pos-bol pos-eol is-fill-curr))
@@ -244,8 +242,7 @@ is logical for a block cursor)."
                    (t
                     pos-prev))))))
          ((eq pos-prev (point))
-          ;; Beginning or end, don't hang!
-          ;; Use the last valid state.
+          ;; Point didn't move, we're at buffer boundary.
           (setq result (point)))
          ;; If we get out of range, use last usable point.
          ((cond
@@ -253,18 +250,17 @@ is logical for a block cursor)."
             (< (point) pos-bol))
            (t
             (>= (point) pos-eol)))
-          ;; Beginning or end, don't hang!
-          ;; Use the last valid state.
+          ;; Point moved past line bounds, use previous valid position.
           (setq result pos-prev))
          (t ; Keep looping.
-          ;; If we reach the beginning or end of the document, we may need to use this.
+          ;; If we reach the beginning or end of the line, we may need to use this.
           (setq pos-prev (point))
           (when (cond
                  ((< dir 0)
                   (> pos-prev pos-bol))
                  (t
                   (<= pos-prev pos-eol)))
-            ;; Forward character.
+            ;; Step to next character.
             (forward-char dir))))))
     result))
 
@@ -275,9 +271,9 @@ is logical for a block cursor)."
 (defun spatial-navigate--vertical (dir is-block-cursor)
   "See `spatial-navigate--vertical-calc' for docs on DIR and IS-BLOCK-CURSOR.
 
-When DIR is outside -1/1 range, motion will run multiple times.
+When DIR is outside the -1/1 range, motion will run multiple times.
 
-Return the number of steps remaining (0 when all succeed
+Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed."
   (declare (important-return-value nil))
   (let ((times (abs dir))
@@ -356,7 +352,7 @@ or nil when the motion could not be performed."
       (spatial-navigate--evil-visual-mode-workaround 'post)
       (* times dir))
      (t
-      (message "Spatial-navigate: line limit reached!")
+      (message "Spatial-navigate: boundary reached!")
       nil))))
 
 
@@ -367,7 +363,8 @@ or nil when the motion could not be performed."
 
 ;;;###autoload
 (defun spatial-navigate-forward-vertical-box (arg)
-  "Jump forward vertically ARG times across white-space & non-white-space.
+  "Jump forward vertically ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -384,7 +381,8 @@ Use for a box cursor."
 
 ;;;###autoload
 (defun spatial-navigate-backward-vertical-box (arg)
-  "Jump backward vertically ARG times across white-space and non-white-space.
+  "Jump backward vertically ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -401,7 +399,8 @@ Use for a box cursor."
 
 ;;;###autoload
 (defun spatial-navigate-forward-vertical-bar (arg)
-  "Jump forward vertically ARG times across white-space and non-white-space.
+  "Jump forward vertically ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -418,7 +417,8 @@ Use for a bar cursor."
 
 ;;;###autoload
 (defun spatial-navigate-backward-vertical-bar (arg)
-  "Jump backward vertically ARG times across white-space and non-white-space.
+  "Jump backward vertically ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -437,8 +437,8 @@ Use for a bar cursor."
 
 ;;;###autoload
 (defun spatial-navigate-forward-horizontal-box (arg)
-  "Jump forward horizontal across white-space and non-white-space.
-A negative ARG reversed the motion.
+  "Jump forward horizontally ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -455,8 +455,8 @@ Use for a box cursor."
 
 ;;;###autoload
 (defun spatial-navigate-backward-horizontal-box (arg)
-  "Jump backward horizontal across white-space and non-white-space.
-A negative ARG reversed the motion.
+  "Jump backward horizontally ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -473,8 +473,8 @@ Use for a box cursor."
 
 ;;;###autoload
 (defun spatial-navigate-forward-horizontal-bar (arg)
-  "Jump forward horizontal across white-space and non-white-space.
-A negative ARG reversed the motion.
+  "Jump forward horizontally ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
@@ -491,8 +491,8 @@ Use for a bar cursor."
 
 ;;;###autoload
 (defun spatial-navigate-backward-horizontal-bar (arg)
-  "Jump backward horizontal across white-space and non-white-space.
-A negative ARG reversed the motion.
+  "Jump backward horizontally ARG times across blank-space and non-blank-space.
+A negative ARG reverses the motion.
 Return the number of steps remaining (0 when all succeed)
 or nil when the motion could not be performed.
 
